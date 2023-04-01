@@ -1,0 +1,27 @@
+[tool.black]
+line-length = 88
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | __pycache__
+  | _build
+  | build
+  | dist
+  | .*tcs
+  | \.xml
+)/
+include = '.*'
+'''
+
+[tool.isort]
+multi_line_output = 3
+line_length = 88
+include_trailing_comma = 'True'
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]

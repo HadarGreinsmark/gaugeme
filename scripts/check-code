@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+
+import shutil
+import subprocess
+import sys
+import venv
+from pathlib import Path
+
+PROJ_DIR = Path(__file__).parent.parent
+
+FILE_PATTERNS = [
+    "src",
+    "scripts/check-code",
+]
+
+
+def ok(proc: subprocess.CompletedProcess):
+    return proc.returncode == 0
+
+
+def install():
+    venv.create(f"{PROJ_DIR}/venv", with_pip=True)
+    subprocess.check_call(
+        [
+            "venv/bin/pip",
+            "install",
+            "--disable-pip-version-check",
+            "-r",
+            "requirements.txt",
+            "-r",
+            "requirements-dev.txt",
+        ],
+        cwd=PROJ_DIR,
+    )
+
+
+def help_():
+    program = sys.argv[0]
+    print(f"Usage: {program} [fmt|lint|test|clean]", file=sys.stderr)
+    sys.exit(1)
+
+
+def fmt():
+    isort = subprocess.run(["venv/bin/isort", *FILE_PATTERNS], cwd=PROJ_DIR)
+    black = subprocess.run(["venv/bin/black", *FILE_PATTERNS], cwd=PROJ_DIR)
+    if not ok(isort) or not ok(black):
+        sys.exit(1)
+
+
+def lint():
+    isort = subprocess.run(
+        ["venv/bin/isort", "--check", "--diff", *FILE_PATTERNS],
+        cwd=PROJ_DIR,
+    )
+    black = subprocess.run(
+        ["venv/bin/black", "--check", "--diff", *FILE_PATTERNS],
+        cwd=PROJ_DIR,
+    )
+    if not ok(isort) or not ok(black):
+        program = sys.argv[0]
+        print()
+        print("Please format code by calling:")
+        print(f"   {program} fmt")
+        sys.exit(1)
+    flake8 = subprocess.run(["venv/bin/flake8", *FILE_PATTERNS], cwd=PROJ_DIR)
+    mypy = subprocess.run(["venv/bin/mypy", "--strict", *FILE_PATTERNS], cwd=PROJ_DIR)
+    if not ok(flake8) or not ok(mypy):
+        sys.exit(1)
+
+
+def test(args: list[str]):
+    pytest = subprocess.run(["venv/bin/pytest", "tests", *args], cwd=PROJ_DIR)
+    if not ok(pytest):
+        sys.exit(1)
+
+
+def clean():
+    shutil.rmtree(f"{PROJ_DIR}/venv", ignore_errors=True)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) <= 1:
+        help_()
+    elif sys.argv[1] == "fmt":
+        install()
+        fmt()
+    elif sys.argv[1] == "lint":
+        install()
+        lint()
+    elif sys.argv[1] == "test":
+        install()
+        test(sys.argv[2:])
+    elif sys.argv[1] == "clean":
+        clean()
+    else:
+        help_()
