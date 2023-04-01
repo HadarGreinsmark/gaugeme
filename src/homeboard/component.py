@@ -1,5 +1,4 @@
 import abc
-import io
 
 import fastapi
 
@@ -18,5 +17,5 @@ class Base(abc.ABC):
         "Returns FastAPI router for this component"
 
     @abc.abstractmethod
-    def html(self) -> bytes | io.BytesIO:
+    def html(self) -> bytes:
         "Returns the HTML for showing this component"

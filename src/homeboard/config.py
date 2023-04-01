@@ -1,4 +1,5 @@
 import os as _os
+from typing import Any
 
 import yaml as _yaml
 
@@ -26,7 +27,8 @@ class State:
     """This ``config.State`` class parses a config object and provides
     methods to access the config structure properly.
     """
-    def __init__(self, config: dict) -> None:
+
+    def __init__(self, config: dict[str, Any]) -> None:
         components = config.get("components", {})
         if not isinstance(components, dict):
             raise Error("'components' key must be a dictionary")
@@ -35,7 +37,7 @@ class State:
                 raise Error(f"Component '{name}' must be a dictionary")
         self._components = components
 
-    def component(self, name: str) -> dict:
+    def component(self, name: str) -> Any:
         if name not in self._components:
             raise ComponentMissingError(f"Component '{name}' is missing")
         return self._components[name]

@@ -14,11 +14,11 @@ FILE_PATTERNS = [
 ]
 
 
-def ok(proc: subprocess.CompletedProcess):
+def ok(proc: subprocess.CompletedProcess[bytes]) -> bool:
     return proc.returncode == 0
 
 
-def install():
+def install() -> None:
     venv.create(f"{PROJ_DIR}/venv", with_pip=True)
     subprocess.check_call(
         [
@@ -34,20 +34,20 @@ def install():
     )
 
 
-def help_():
+def help_() -> None:
     program = sys.argv[0]
     print(f"Usage: {program} [fmt|lint|test|clean]", file=sys.stderr)
     sys.exit(1)
 
 
-def fmt():
+def fmt() -> None:
     isort = subprocess.run(["venv/bin/isort", *FILE_PATTERNS], cwd=PROJ_DIR)
     black = subprocess.run(["venv/bin/black", *FILE_PATTERNS], cwd=PROJ_DIR)
     if not ok(isort) or not ok(black):
         sys.exit(1)
 
 
-def lint():
+def lint() -> None:
     isort = subprocess.run(
         ["venv/bin/isort", "--check", "--diff", *FILE_PATTERNS],
         cwd=PROJ_DIR,
@@ -68,13 +68,13 @@ def lint():
         sys.exit(1)
 
 
-def test(args: list[str]):
+def test(args: list[str]) -> None:
     pytest = subprocess.run(["venv/bin/pytest", "tests", *args], cwd=PROJ_DIR)
     if not ok(pytest):
         sys.exit(1)
 
 
-def clean():
+def clean() -> None:
     shutil.rmtree(f"{PROJ_DIR}/venv", ignore_errors=True)
 
 
