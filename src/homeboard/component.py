@@ -2,15 +2,13 @@ import abc
 
 import fastapi
 
-import homeboard.config
-
 
 class Base(abc.ABC):
     "This is an interface to be inherited by components"
 
     @abc.abstractmethod
-    def __init__(self, *, config: homeboard.config.State):
-        "Loads component with config injected"
+    def __init__(self) -> None:
+        "Loads component"
 
     @abc.abstractmethod
     def router(self) -> fastapi.APIRouter:

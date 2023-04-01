@@ -11,29 +11,27 @@ __all__ = [
     "Component",
 ]
 
-# undesirable_time_visited = homeboard.config.components["web_time_tracker"]
-
 router = fastapi.APIRouter(
     prefix="/web_time_tracker",
     tags=["web_time_tracker"],
     responses={404: {"description": "Not found"}},
 )
 
-html = b"ahaaa"
-
 
 class Component(homeboard.component.Base):
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def router(self) -> fastapi.APIRouter:
         return router
 
     def html(self) -> bytes:
-        return html
+        return b"ahaaa"
 
 
-def summarize_todays_browsing_statistics(statistics: list) -> dict:
+def summarize_todays_browsing_statistics(
+    statistics: list[dict[str, Any]], domains: list[str]
+) -> int:
     """
     Summarize todays browsing statistics.
     """
@@ -47,8 +45,8 @@ def summarize_todays_browsing_statistics(statistics: list) -> dict:
         if day["date"] != today:
             continue
 
-        for undesirable in undesirable_time_visited:
-            if website["url"].endswith(undesirable):
+        for d in domains:
+            if website["url"].endswith(d):
                 aggregate_time_visited += day["summary"]
                 break
 
@@ -56,15 +54,19 @@ def summarize_todays_browsing_statistics(statistics: list) -> dict:
 
 
 @router.post("/browsing_statistics")
-def browsing_statistics(statistics: list):
+def browsing_statistics(statistics: list[dict[str, Any]]) -> dict[str, str]:
     with open("browsing_statistics.json", "w") as f:
         f.write(json.dumps(statistics))
     return {"status": "ok"}
 
 
 @router.get("/kpi")
-def kpi(component_config: Annotated[Any, fastapi.Depends(homeboard.config.cached)]):
+def kpi(config: Annotated[Any, fastapi.Depends(homeboard.config.cached)]) -> Any:
+    domains = config.component("web_time_tracker").get("domains")
+    if domains is None:
+        raise fastapi.HTTPException(status_code=500, detail="No domains configured")
+
     with open("browsing_statistics.json", "r") as f:
         statistics = json.loads(f.read())
-    time_visited = summarize_todays_browsing_statistics(statistics)
+    time_visited = summarize_todays_browsing_statistics(statistics, domains)
     return {"undesirable_time_visited": time_visited}
