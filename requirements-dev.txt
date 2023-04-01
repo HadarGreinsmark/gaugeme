@@ -1,6 +1,8 @@
 black
 flake8
+httpx
 isort
 mypy
 pytest
+python-multipart
 types-PyYAML

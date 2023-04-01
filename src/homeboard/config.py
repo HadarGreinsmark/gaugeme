@@ -1,3 +1,4 @@
+import functools as _functools
 import os as _os
 from typing import Any
 
@@ -52,3 +53,8 @@ def load() -> State:
             return State(_yaml.safe_load(f))
     except Exception as e:
         raise LoadError(f"Exception when loading config file '{file}'") from e
+
+
+@_functools.lru_cache
+def cached() -> State:
+    return load()

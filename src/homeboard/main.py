@@ -1,7 +1,8 @@
 import importlib
 import pkgutil
+from typing import Annotated
 
-from fastapi import FastAPI, Response
+from fastapi import Depends, FastAPI, Response
 
 import homeboard.component
 import homeboard.components
@@ -25,19 +26,18 @@ def import_components() -> dict[str, type[homeboard.component.Base]]:
 
 components = import_components()
 
-# TODO: Fail without Python stack trace
-_config = homeboard.config.load()
-
 app = FastAPI()
 _html_components = {}
 for name in components:
-    instance = components[name](config=_config)
+    instance = components[name]()
     app.include_router(instance.router())
     _html_components[name] = instance.html()
 
 
 @app.get("/dashboard")
-def dashboard() -> Response:
+def dashboard(
+    config: Annotated[homeboard.config.State, Depends(homeboard.config.cached)]
+) -> Response:
     page = []
     for html in _html_components.values():
         page.append(html)

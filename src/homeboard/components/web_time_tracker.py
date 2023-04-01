@@ -1,5 +1,6 @@
 import datetime
 import json
+from typing import Annotated, Any
 
 import fastapi
 
@@ -22,8 +23,8 @@ html = b"ahaaa"
 
 
 class Component(homeboard.component.Base):
-    def __init__(self, *, config: homeboard.config.State):
-        self._config = config
+    def __init__(self):
+        pass
 
     def router(self) -> fastapi.APIRouter:
         return router
@@ -62,7 +63,7 @@ def browsing_statistics(statistics: list):
 
 
 @router.get("/kpi")
-def kpi():
+def kpi(component_config: Annotated[Any, fastapi.Depends(homeboard.config.cached)]):
     with open("browsing_statistics.json", "r") as f:
         statistics = json.loads(f.read())
     time_visited = summarize_todays_browsing_statistics(statistics)
