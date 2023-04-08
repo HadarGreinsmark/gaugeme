@@ -38,6 +38,9 @@ class State:
                 raise Error(f"Component '{name}' must be a dictionary")
         self._components = components
 
+    def has_component(self, name: str) -> bool:
+        return name in self._components
+
     def component(self, name: str) -> Any:
         if name not in self._components:
             raise ComponentMissingError(f"Component '{name}' is missing")

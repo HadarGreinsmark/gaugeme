@@ -11,6 +11,7 @@ PROJ_DIR = Path(__file__).parent.parent
 FILE_PATTERNS = [
     "src",
     "scripts/check-code",
+    "scripts/generate-certs",
     "tests",
 ]
 
@@ -20,19 +21,29 @@ def ok(proc: subprocess.CompletedProcess[bytes]) -> bool:
 
 
 def install() -> None:
-    venv.create(f"{PROJ_DIR}/venv", with_pip=True)
-    subprocess.check_call(
-        [
-            "venv/bin/pip",
-            "install",
-            "--disable-pip-version-check",
-            "-r",
-            "requirements.txt",
-            "-r",
-            "requirements-dev.txt",
-        ],
-        cwd=PROJ_DIR,
-    )
+    try:
+        venv.create(f"{PROJ_DIR}/venv", with_pip=True)
+        subprocess.check_call(
+            [
+                "venv/bin/pip",
+                "install",
+                "--disable-pip-version-check",
+                "-r",
+                "requirements.txt",
+                "-r",
+                "requirements-dev.txt",
+            ],
+            cwd=PROJ_DIR,
+        )
+    except Exception as e:
+        program = sys.argv[0]
+        print(
+            f"failed creating python virtual env: {e}\n"
+            "Consider running:\n"
+            f"    {program} clean",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 
 def help_() -> None:

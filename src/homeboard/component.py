@@ -11,9 +11,9 @@ class Base(abc.ABC):
         "Loads component"
 
     @abc.abstractmethod
-    def router(self) -> fastapi.APIRouter:
+    def router(self) -> fastapi.APIRouter | None:
         "Returns FastAPI router for this component"
 
     @abc.abstractmethod
-    def html(self) -> bytes:
+    def html(self) -> str:
         "Returns the HTML for showing this component"

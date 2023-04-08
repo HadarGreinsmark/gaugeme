@@ -1,0 +1,16 @@
+<div id="kpi_meters">
+  <p><span id="visited_mins">X</span> mins</p>
+</div>
+
+<script>
+// Get the KPIs from the /kpi endpoint every minute and display them on the dashboard
+async function getKPIs() {
+    today = new Date();
+    today_string = today.toISOString().split('T')[0];
+    const resp = await fetch(`web_time_tracker/kpi?day=${today_string}`);
+    const kpis = await resp.json();
+    document.getElementById('visited_mins').innerHTML = `${Math.round(kpis.visited_secs / 60)}`;
+}
+getKPIs();
+setInterval(getKPIs, 60000);
+</script>

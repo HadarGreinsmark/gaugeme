@@ -1,7 +1,9 @@
 import importlib
 import pkgutil
+from pathlib import Path
 from typing import Annotated
 
+import chevron
 from fastapi import Depends, FastAPI, Response
 
 import homeboard.component
@@ -27,20 +29,24 @@ def import_components() -> dict[str, type[homeboard.component.Base]]:
 components = import_components()
 
 app = FastAPI()
-_html_components = {}
+_html_components = []
 for name in components:
+    if not homeboard.config.cached().has_component(name):
+        continue
     instance = components[name]()
-    app.include_router(instance.router())
-    _html_components[name] = instance.html()
+    if router := instance.router():
+        app.include_router(router)
+    _html_components.append({"article": instance.html()})
+
+
+template_path = Path(__file__).parent.joinpath("index.html.mustache")
+
+with open(template_path) as f:
+    page = chevron.render(f, {"widgets": _html_components})
 
 
 @app.get("/dashboard")
 def dashboard(
     config: Annotated[homeboard.config.State, Depends(homeboard.config.cached)]
 ) -> Response:
-    page = []
-    for html in _html_components.values():
-        page.append(html)
-
-    # with open("dashboard.html", "r") as f:
-    return Response(b"".join(page), media_type="text/html")
+    return Response(page, media_type="text/html")

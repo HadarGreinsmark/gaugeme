@@ -1,4 +1,5 @@
 import datetime
+from pathlib import Path
 from typing import Annotated, Any
 
 import fastapi
@@ -26,8 +27,8 @@ class Component(homeboard.component.Base):
     def router(self) -> fastapi.APIRouter:
         return router
 
-    def html(self) -> bytes:
-        return b"ahaaa"
+    def html(self) -> str:
+        return Path(__file__).parent.joinpath("index.html").read_text()
 
 
 def summarize_todays_browsing_statistics(
