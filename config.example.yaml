@@ -1,0 +1,11 @@
+components:
+  web_time_tracker:
+    domains:
+      # Time spent on these domains will be summarized on the dashboard
+      - youtube.com
+      - facebook.com
+  clock:
+    displayed:
+      # Hiding the clock at night may improve your sleep
+      begin_hour: 6
+      end_hour: 22
