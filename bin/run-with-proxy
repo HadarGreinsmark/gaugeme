@@ -1,0 +1,14 @@
+#!/bin/bash
+
+nginx -g "daemon off;" &
+
+PYTHONPATH=/opt/gaugeme/src \
+    HOMEBOARD_CONFIG=~/.config/gaugeme/config.yaml \
+    uvicorn homeboard.main:app \
+    --uds /var/run/uvicorn.sock \
+    --proxy-headers \
+    --forwarded-allow-ips='*' \
+    &
+
+
+wait -n

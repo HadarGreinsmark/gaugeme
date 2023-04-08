@@ -1,0 +1,192 @@
+#!/usr/bin/env python3
+
+"""
+Requires openssl to be installed.
+"""
+
+import os
+import stat
+import subprocess
+import sys
+from pathlib import Path
+
+UMASK = os.umask(0)
+os.umask(UMASK)
+
+
+def clean_permission(file: Path) -> None:
+    """Uses umask to set the system default permission. OpenSSL will
+    set 600 on private keys by default, which may cause problems when
+    running as a different user inside a container.
+    We instead make sure that the folder has restricted permissions.
+    """
+    os.chmod(file, 0o666 & ~UMASK)
+
+
+def generate_certs(cert_dir: Path) -> None:
+    subprocess.check_call(
+        [
+            "openssl",
+            "req",
+            "-new",
+            "-x509",
+            "-days",
+            "9999",
+            "-keyout",
+            "ca.private.pem",
+            "-out",
+            "ca.public.pem",
+            "-nodes",
+            "-subj",
+            "/C=US/CN=ca.gaugeme",
+        ],
+        cwd=cert_dir,
+    )
+    clean_permission(cert_dir / "ca.private.pem")
+
+    subprocess.check_call(
+        ["openssl", "genrsa", "-out", "server.private.pem", "4096"], cwd=cert_dir
+    )
+
+    subprocess.check_call(
+        [
+            "openssl",
+            "req",
+            "-new",
+            "-key",
+            "server.private.pem",
+            "-out",
+            "server.csr.pem",
+            "-subj",
+            "/C=US/CN=server.gaugeme",
+            "-addext",
+            "subjectAltName = DNS:localhost, IP:127.0.0.1",
+        ],
+        cwd=cert_dir,
+    )
+    clean_permission(cert_dir / "server.private.pem")
+
+    subprocess.check_call(
+        [
+            "openssl",
+            "x509",
+            "-req",
+            "-days",
+            "9999",
+            "-in",
+            "server.csr.pem",
+            "-CA",
+            "ca.public.pem",
+            "-CAkey",
+            "ca.private.pem",
+            "-CAcreateserial",
+            "-out",
+            "server.public.pem",
+            "-copy_extensions",
+            "copy",
+        ],
+        cwd=cert_dir,
+    )
+    (cert_dir / "server.csr.pem").unlink()
+
+    subprocess.check_call(
+        ["openssl", "verify", "-CAfile", "ca.public.pem", "server.public.pem"],
+        cwd=cert_dir,
+    )
+
+    subprocess.check_call(
+        ["openssl", "genrsa", "-out", "client.private.pem", "4096"], cwd=cert_dir
+    )
+
+    subprocess.check_call(
+        [
+            "openssl",
+            "req",
+            "-new",
+            "-key",
+            "client.private.pem",
+            "-out",
+            "client.csr.pem",
+            "-subj",
+            "/C=US/CN=client.gaugeme",
+        ],
+        cwd=cert_dir,
+    )
+    clean_permission(cert_dir / "client.private.pem")
+
+    subprocess.check_call(
+        [
+            "openssl",
+            "x509",
+            "-req",
+            "-days",
+            "9999",
+            "-in",
+            "client.csr.pem",
+            "-CA",
+            "ca.public.pem",
+            "-CAkey",
+            "ca.private.pem",
+            "-CAcreateserial",
+            "-out",
+            "client.public.pem",
+        ],
+        cwd=cert_dir,
+    )
+    (cert_dir / "client.csr.pem").unlink()
+
+    subprocess.check_call(
+        ["openssl", "verify", "-CAfile", "ca.public.pem", "client.public.pem"],
+        cwd=cert_dir,
+    )
+
+    subprocess.check_call(
+        [
+            "openssl",
+            "pkcs12",
+            "-export",
+            "-keypbe",
+            "NONE",
+            "-certpbe",
+            "NONE",
+            "-nomaciter",
+            "-passout",
+            "pass:",
+            "-legacy",
+            "-out",
+            "client.gaugeme.pfx",
+            "-inkey",
+            "client.private.pem",
+            "-in",
+            "client.public.pem",
+            "-certfile",
+            "ca.public.pem",
+        ],
+        cwd=cert_dir,
+    )
+    clean_permission(cert_dir / "client.gaugeme.pfx")
+
+
+def main(args: list[str]) -> None:
+    if len(args) != 2:
+        print(
+            f"""\
+Usage: {args[0]} CERTIFICATE_DIR
+Generates server and client certificates into CERTIFICATE_DIR.""",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    cert_dir = Path(args[1])
+    cert_dir.mkdir(parents=True, exist_ok=True)
+    os.chmod(cert_dir, stat.S_IRWXU)
+    try:
+        generate_certs(cert_dir)
+    except subprocess.CalledProcessError as e:
+        print("failed:", e, file=sys.stderr)
+        sys.exit(1)
+    print("\nDone generating certificates ✅")
+
+
+if __name__ == "__main__":
+    main(sys.argv)
