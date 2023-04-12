@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import shutil
 import subprocess
 import sys
@@ -81,7 +82,8 @@ def lint() -> None:
 
 
 def test(args: list[str]) -> None:
-    pytest = subprocess.run(["venv/bin/pytest", "tests", *args], cwd=PROJ_DIR)
+    env = {**os.environ, "HOMEBOARD_CONFIG": "config.example.yaml"}
+    pytest = subprocess.run(["venv/bin/pytest", "tests", *args], cwd=PROJ_DIR, env=env)
     if not ok(pytest):
         sys.exit(1)
 

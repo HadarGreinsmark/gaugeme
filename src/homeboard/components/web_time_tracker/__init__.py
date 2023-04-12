@@ -31,27 +31,36 @@ class Component(homeboard.component.Base):
         return Path(__file__).parent.joinpath("index.html").read_text()
 
 
-def summarize_todays_browsing_statistics(
-    statistics: list[dict[str, Any]], domains: list[str], day: datetime.date
-) -> int:
+def sum_visited_secs(
+    statistics: list[dict[str, Any]],
+    domains: list[str],
+    start: datetime.date,
+    forward: int,
+) -> list[int]:
     """
-    Summarize todays browsing statistics.
+    Summarizes browsing statistics for the domains given and within the
+    time interval.
     """
-
-    aggregate_time_visited = 0
-    day_string = day.strftime("%-m/%-d/%Y")
-
+    visited_sums = [0] * (forward + 1)
     for website in statistics:
-        web_day = website["days"][-1]
-        if web_day["date"] != day_string:
+        tracked = False
+        for d in domains:
+            # Domain checking could be optimized
+            if website["url"].endswith(d):
+                tracked = True
+                break
+        if not tracked:
             continue
 
-        for d in domains:
-            if website["url"].endswith(d):
-                aggregate_time_visited += web_day["summary"]
-                break
-
-    return aggregate_time_visited
+        # We only have to check the last `forward` days
+        relevant_days = website["days"][-forward - 1 :]
+        for day_stats in relevant_days:
+            day = datetime.datetime.strptime(day_stats["date"], "%m/%d/%Y").date()
+            day_index = (day - start).days
+            if day_index < 0 or day_index > forward:
+                continue
+            visited_sums[day_index] += day_stats["summary"]
+    return visited_sums
 
 
 @router.post("/browsing_statistics")
@@ -63,12 +72,11 @@ def browsing_statistics(statistics: list[dict[str, Any]]) -> dict[str, str]:
 
 @router.get("/kpi")
 def kpi(
-    day: datetime.date,
+    start: datetime.date,
+    forward: int,
     config: Annotated[Any, fastapi.Depends(homeboard.config.cached)],
 ) -> Any:
     domains = config.component("web_time_tracker").get("domains")
     if domains is None:
         raise fastapi.HTTPException(status_code=500, detail="No domains configured")
-
-    time_visited = summarize_todays_browsing_statistics(statistics_store, domains, day)
-    return {"visited_secs": time_visited}
+    return {"visited_secs": sum_visited_secs(statistics_store, domains, start, forward)}

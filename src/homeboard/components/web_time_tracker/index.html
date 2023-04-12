@@ -1,15 +1,62 @@
-<div id="kpi_meters">
-  <p><span id="visited_mins">X</span> mins</p>
+<style>
+#web_time_tracker_container {
+  width: 700px;
+  height: 400px;
+}
+</style>
+
+<div id="web_time_tracker_container">
+  <canvas id="myChart"></canvas>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
+  const ctx = document.getElementById('myChart');
+
+  let chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['X', 'X', 'X', 'X', 'X', 'X', 'X'],
+      datasets: [{
+        label: 'Minutes tracked on the web',
+        data: [0, 0, 0, 0, 0, 0, 0],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+</script>
+
+<script>
+const weekdays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
 // Get the KPIs from the /kpi endpoint every minute and display them on the dashboard
 async function getKPIs() {
-    today = new Date();
-    today_string = today.toISOString().split('T')[0];
-    const resp = await fetch(`web_time_tracker/kpi?day=${today_string}`);
+    start_day = new Date();
+    start_day.setDate(start_day.getDate() - 6);
+    start_day_string = start_day.toISOString().split('T')[0];
+    const resp = await fetch(`web_time_tracker/kpi?start=${start_day_string}&forward=6`);
     const kpis = await resp.json();
-    document.getElementById('visited_mins').innerHTML = `${Math.round(kpis.visited_secs / 60)}`;
+    visited_mins = []
+    for (let i = 0; i < kpis.visited_secs.length; i++) {
+        visited_mins.push(Math.round(kpis.visited_secs[i] / 60));
+    }
+    chart.data.datasets[0].data = visited_mins;
+    chart.data.labels = [];
+    for (let i = 7; i > 0; i--) {
+        chart.data.labels.push(weekdays[(start_day.getDay() + 7 - i) % 7]);
+    }
+
+    chart.update();
 }
 getKPIs();
 setInterval(getKPIs, 60000);
