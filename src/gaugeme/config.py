@@ -48,9 +48,9 @@ class State:
 
 
 def load() -> State:
-    file = _os.environ.get("HOMEBOARD_CONFIG")
+    file = _os.environ.get("GAUGEME_CONFIG")
     if file is None:
-        raise LoadError("Environment variable HOMEBOARD_CONFIG must be set")
+        raise LoadError("Environment variable GAUGEME_CONFIG must be set")
     try:
         with open(file, encoding="utf-8") as f:
             return State(_yaml.safe_load(f))

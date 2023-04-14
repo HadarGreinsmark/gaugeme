@@ -1,7 +1,7 @@
 import fastapi
 
-import homeboard.component
-import homeboard.config
+import gaugeme.component
+import gaugeme.config
 
 __all__ = [
     "Component",
@@ -32,7 +32,7 @@ setInterval(updateClock, 5000);
 """
 
 
-class Component(homeboard.component.Base):
+class Component(gaugeme.component.Base):
     def __init__(self) -> None:
         pass
 
@@ -40,7 +40,7 @@ class Component(homeboard.component.Base):
         return None
 
     def html(self) -> str:
-        displayed = homeboard.config.cached().component("clock").get("displayed", {})
+        displayed = gaugeme.config.cached().component("clock").get("displayed", {})
         begin_hour = displayed.get("begin_hour", 0)
         end_hour = displayed.get("end_hour", 24)
         return HTML % (begin_hour, end_hour)

@@ -82,7 +82,7 @@ def lint() -> None:
 
 
 def test(args: list[str]) -> None:
-    env = {**os.environ, "HOMEBOARD_CONFIG": "config.example.yaml"}
+    env = {**os.environ, "GAUGEME_CONFIG": "config.example.yaml"}
     pytest = subprocess.run(["venv/bin/pytest", "tests", *args], cwd=PROJ_DIR, env=env)
     if not ok(pytest):
         sys.exit(1)

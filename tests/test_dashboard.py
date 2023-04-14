@@ -1,16 +1,16 @@
 import fastapi.testclient
 
-import homeboard.config
-import homeboard.main
+import gaugeme.config
+import gaugeme.main
 
-client = fastapi.testclient.TestClient(homeboard.main.app)
-
-
-def fake_config() -> homeboard.config.State:
-    return homeboard.config.State({})
+client = fastapi.testclient.TestClient(gaugeme.main.app)
 
 
-homeboard.main.app.dependency_overrides[homeboard.config.cached] = fake_config
+def fake_config() -> gaugeme.config.State:
+    return gaugeme.config.State({})
+
+
+gaugeme.main.app.dependency_overrides[gaugeme.config.cached] = fake_config
 
 
 def test_get_dashboard() -> None:

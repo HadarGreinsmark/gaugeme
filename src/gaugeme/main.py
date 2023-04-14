@@ -6,22 +6,22 @@ from typing import Annotated
 import chevron
 from fastapi import Depends, FastAPI, Response
 
-import homeboard.component
-import homeboard.components
-import homeboard.config
+import gaugeme.component
+import gaugeme.components
+import gaugeme.config
 
 
-def import_components() -> dict[str, type[homeboard.component.Base]]:
-    "Imports and returns all components from ``homeboard.components.*.Component``"
+def import_components() -> dict[str, type[gaugeme.component.Base]]:
+    "Imports and returns all components from ``gaugeme.components.*.Component``"
     components = {}
-    for info in pkgutil.iter_modules(homeboard.components.__path__):
-        mod_name = f"homeboard.components.{info.name}"
+    for info in pkgutil.iter_modules(gaugeme.components.__path__):
+        mod_name = f"gaugeme.components.{info.name}"
         mod = importlib.import_module(mod_name)
         class_name = f"{mod_name}.Component"
         if not hasattr(mod, "Component"):
             raise Exception(f"Required class {class_name} is missing")
-        if not issubclass(mod.Component, homeboard.component.Base):
-            raise Exception(f"{class_name} must subclass homeboard.component.Base")
+        if not issubclass(mod.Component, gaugeme.component.Base):
+            raise Exception(f"{class_name} must subclass gaugeme.component.Base")
         components[info.name] = mod.Component
     return components
 
@@ -31,7 +31,7 @@ components = import_components()
 app = FastAPI()
 _html_components = []
 for name in components:
-    if not homeboard.config.cached().has_component(name):
+    if not gaugeme.config.cached().has_component(name):
         continue
     instance = components[name]()
     if router := instance.router():
@@ -47,6 +47,6 @@ with open(template_path) as f:
 
 @app.get("/dashboard")
 def dashboard(
-    config: Annotated[homeboard.config.State, Depends(homeboard.config.cached)]
+    config: Annotated[gaugeme.config.State, Depends(gaugeme.config.cached)]
 ) -> Response:
     return Response(page, media_type="text/html")

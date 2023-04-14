@@ -1,13 +1,13 @@
 import fastapi.testclient
 
-import homeboard.config
-import homeboard.main
+import gaugeme.config
+import gaugeme.main
 
-client = fastapi.testclient.TestClient(homeboard.main.app)
+client = fastapi.testclient.TestClient(gaugeme.main.app)
 
 
-def fake_config() -> homeboard.config.State:
-    return homeboard.config.State(
+def fake_config() -> gaugeme.config.State:
+    return gaugeme.config.State(
         {
             "components": {
                 "web_time_tracker": {
@@ -21,7 +21,7 @@ def fake_config() -> homeboard.config.State:
     )
 
 
-homeboard.main.app.dependency_overrides[homeboard.config.cached] = fake_config
+gaugeme.main.app.dependency_overrides[gaugeme.config.cached] = fake_config
 
 
 def test_only_tracked_domains_are_summarized() -> None:

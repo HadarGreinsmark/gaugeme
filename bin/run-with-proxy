@@ -3,8 +3,8 @@
 nginx -g "daemon off;" &
 
 PYTHONPATH=/opt/gaugeme/src \
-    HOMEBOARD_CONFIG=~/.config/gaugeme/config.yaml \
-    uvicorn homeboard.main:app \
+    GAUGEME_CONFIG=~/.config/gaugeme/config.yaml \
+    uvicorn gaugeme.main:app \
     --uds /var/run/uvicorn.sock \
     --proxy-headers \
     --forwarded-allow-ips='*' \

@@ -4,8 +4,8 @@ from typing import Annotated, Any
 
 import fastapi
 
-import homeboard.component
-import homeboard.config
+import gaugeme.component
+import gaugeme.config
 
 __all__ = [
     "Component",
@@ -20,7 +20,7 @@ router = fastapi.APIRouter(
 statistics_store = []
 
 
-class Component(homeboard.component.Base):
+class Component(gaugeme.component.Base):
     def __init__(self) -> None:
         pass
 
@@ -74,7 +74,7 @@ def browsing_statistics(statistics: list[dict[str, Any]]) -> dict[str, str]:
 def kpi(
     start: datetime.date,
     forward: int,
-    config: Annotated[Any, fastapi.Depends(homeboard.config.cached)],
+    config: Annotated[Any, fastapi.Depends(gaugeme.config.cached)],
 ) -> Any:
     domains = config.component("web_time_tracker").get("domains")
     if domains is None:
