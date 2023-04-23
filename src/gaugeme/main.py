@@ -5,6 +5,7 @@ from typing import Annotated
 
 import chevron
 from fastapi import Depends, FastAPI, Response
+from fastapi.middleware.cors import CORSMiddleware
 
 import gaugeme.component
 import gaugeme.components
@@ -29,6 +30,14 @@ def import_components() -> dict[str, type[gaugeme.component.Base]]:
 components = import_components()
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 _html_components = []
 for name in components:
     if not gaugeme.config.cached().has_component(name):
