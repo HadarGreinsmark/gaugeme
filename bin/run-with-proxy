@@ -1,6 +1,20 @@
 #!/bin/bash
 
+function broadcast_sigint {
+    kill -SIGINT "$nginx_pid"
+    kill -SIGINT "$uvicorn_pid"
+}
+
+function broadcast_sigterm {
+    kill -SIGTERM "$nginx_pid"
+    kill -SIGTERM "$uvicorn_pid"
+}
+
+trap broadcast_sigint SIGINT
+trap broadcast_sigterm SIGTERM
+
 nginx -g "daemon off;" &
+nginx_pid=$!
 
 PYTHONPATH=/opt/gaugeme/src \
     GAUGEME_CONFIG=~/.config/gaugeme/config.yaml \
@@ -9,6 +23,6 @@ PYTHONPATH=/opt/gaugeme/src \
     --proxy-headers \
     --forwarded-allow-ips='*' \
     &
-
+uvicorn_pid=$!
 
 wait -n
